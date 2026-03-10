@@ -31,9 +31,10 @@ export class KCSchematicAppElement extends KCViewerAppElement<KCSchematicViewerE
 
         // If it's a sheet instance, switch over to the new sheet.
         if (item instanceof SchematicSheet) {
-            this.project.set_active_page(
-                `${item.sheetfile}:${item.path}/${item.uuid}`,
-            );
+            const parent_path =
+                this.project.active_page?.sheet_path ?? "";
+            const page_path = `${item.sheetfile}:${parent_path}/${item.uuid}`;
+            this.project.set_active_page(page_path);
             return;
         }
 

@@ -1697,10 +1697,14 @@ export class SchematicSheet {
     }
 
     get sheetfile() {
-        return (
+        const file =
             this.get_property_text("Sheetfile") ??
-            this.get_property_text("Sheet file")
-        );
+            this.get_property_text("Sheet file");
+        // Strip "./" prefix used by KiCad.
+        if (file?.startsWith("./")) {
+            return file.slice(2);
+        }
+        return file;
     }
 
     resolve_text_var(name: string): string | undefined {

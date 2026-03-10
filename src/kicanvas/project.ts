@@ -11,8 +11,8 @@ import { first, length, map } from "../base/iterator";
 import { Logger } from "../base/log";
 import { is_string, type Constructor } from "../base/types";
 import { KicadPCB, KicadSch, ProjectSettings } from "../kicad";
-import type {
-    SchematicSheet,
+import {
+    type SchematicSheet,
     SchematicSheetInstance,
 } from "../kicad/schematic";
 import type { VirtualFileSystem } from "./services/vfs";
@@ -55,13 +55,25 @@ export class Project extends EventTarget implements IDisposable {
             promises = [];
             for (const schematic of this.schematics()) {
                 for (const sheet of schematic.sheets) {
-                    const sheet_sch = this.#files_by_name.get(
+                    const sheet_sch = this.#find_file(
                         sheet.sheetfile ?? "",
                     ) as KicadSch;
 
                     if (!sheet_sch && sheet.sheetfile) {
-                        // Missing schematic, attempt to fetch
-                        promises.push(this.#load_file(sheet.sheetfile));
+                        // Missing schematic, try exact path then basename.
+                        if (await this.#fs.has(sheet.sheetfile)) {
+                            promises.push(this.#load_file(sheet.sheetfile));
+                        } else {
+                            const base =
+                                sheet.sheetfile.split("/").pop() ??
+                                sheet.sheetfile;
+                            if (
+                                base !== sheet.sheetfile &&
+                                (await this.#fs.has(base))
+                            ) {
+                                promises.push(this.#load_file(base));
+                            }
+                        }
                     }
                 }
             }
@@ -77,6 +89,18 @@ export class Project extends EventTarget implements IDisposable {
                 detail: this,
             }),
         );
+    }
+
+    // Look up a loaded file by name, with basename fallback.
+    #find_file(name: string): KicadPCB | KicadSch | null | undefined {
+        const exact = this.#files_by_name.get(name);
+        if (exact !== undefined) return exact;
+
+        const base = name.split("/").pop() ?? name;
+        if (base !== name) {
+            return this.#files_by_name.get(base);
+        }
+        return undefined;
     }
 
     async #load_file(filename: string) {
@@ -149,12 +173,19 @@ export class Project extends EventTarget implements IDisposable {
             paths_to_schematics.set(`/${schematic.uuid}`, schematic);
 
             for (const sheet of schematic.sheets) {
-                const sheet_sch = this.#files_by_name.get(
+                const sheet_sch = this.#find_file(
                     sheet.sheetfile ?? "",
                 ) as KicadSch;
 
                 if (!sheet_sch) {
                     continue;
+                }
+
+                // Create a default instance for sheets without one.
+                if (!sheet.instances.size) {
+                    const inst = new SchematicSheetInstance();
+                    inst.path = `/${schematic.uuid}`;
+                    sheet.instances.set(inst.path, inst);
                 }
 
                 for (const instance of sheet.instances.values()) {
@@ -258,7 +289,7 @@ export class Project extends EventTarget implements IDisposable {
     }
 
     public file_by_name(name: string) {
-        return this.#files_by_name.get(name);
+        return this.#find_file(name);
     }
 
     public *boards() {

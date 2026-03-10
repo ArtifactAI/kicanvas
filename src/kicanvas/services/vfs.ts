@@ -119,77 +119,100 @@ export class FetchFileSystem extends VirtualFileSystem {
  * Virtual file system for HTML drag and drop (DataTransfer)
  */
 export class DragAndDropFileSystem extends VirtualFileSystem {
-    constructor(private items: FileSystemFileEntry[]) {
+    constructor(private items: Map<string, FileSystemFileEntry>) {
         super();
     }
 
     static async fromDataTransfer(dt: DataTransfer) {
-        let items: FileSystemEntry[] = [];
+        const entries: FileSystemEntry[] = [];
 
-        // Pluck items out as webkit entries (either FileSystemFileEntry or
-        // FileSystemDirectoryEntry)
         for (let i = 0; i < dt.items.length; i++) {
             const item = dt.items[i]?.webkitGetAsEntry();
             if (item) {
-                items.push(item);
+                entries.push(item);
             }
         }
 
-        // If it's just one directory then open it and set all of our items
-        // to its contents.
-        if (items.length == 1 && items[0]?.isDirectory) {
-            const reader = (
-                items[0] as FileSystemDirectoryEntry
-            ).createReader();
+        const items = new Map<string, FileSystemFileEntry>();
 
-            items = [];
-
-            await new Promise((resolve, reject) => {
-                reader.readEntries((entries) => {
-                    for (const entry of entries) {
-                        if (!entry.isFile) {
-                            continue;
-                        }
-                        items.push(entry);
-                    }
-                    resolve(true);
-                }, reject);
-            });
+        // If a single directory, read it recursively with relative paths.
+        if (entries.length == 1 && entries[0]?.isDirectory) {
+            await this.readDirectoryRecursive(
+                entries[0] as FileSystemDirectoryEntry,
+                entries[0].fullPath,
+                items,
+            );
+        } else {
+            for (const entry of entries) {
+                if (entry.isFile) {
+                    items.set(entry.name, entry as FileSystemFileEntry);
+                } else if (entry.isDirectory) {
+                    const parentPath = entry.fullPath.replace(/\/[^/]+$/, "");
+                    await this.readDirectoryRecursive(
+                        entry as FileSystemDirectoryEntry,
+                        parentPath,
+                        items,
+                    );
+                }
+            }
         }
 
-        return new DragAndDropFileSystem(items as FileSystemFileEntry[]);
+        return new DragAndDropFileSystem(items);
+    }
+
+    private static async readDirectoryRecursive(
+        dir: FileSystemDirectoryEntry,
+        rootPath: string,
+        results: Map<string, FileSystemFileEntry>,
+    ) {
+        const reader = dir.createReader();
+
+        // readEntries returns results in batches per spec.
+        let batch: FileSystemEntry[];
+        do {
+            batch = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+                reader.readEntries(
+                    (entries) => resolve(Array.from(entries)),
+                    reject,
+                );
+            });
+
+            for (const entry of batch) {
+                if (entry.isFile) {
+                    let relativePath = entry.fullPath;
+                    const prefix = rootPath + "/";
+                    if (relativePath.startsWith(prefix)) {
+                        relativePath = relativePath.slice(prefix.length);
+                    }
+                    results.set(relativePath, entry as FileSystemFileEntry);
+                } else if (entry.isDirectory) {
+                    await this.readDirectoryRecursive(
+                        entry as FileSystemDirectoryEntry,
+                        rootPath,
+                        results,
+                    );
+                }
+            }
+        } while (batch.length > 0);
     }
 
     public override *list() {
-        for (const entry of this.items) {
-            yield entry.name;
-        }
+        yield* this.items.keys();
     }
 
     public override async has(name: string): Promise<boolean> {
-        for (const entry of this.items) {
-            if (entry.name == name) {
-                return true;
-            }
-        }
-        return false;
+        return this.items.has(name);
     }
 
     public override async get(name: string): Promise<File> {
-        let file_entry: FileSystemFileEntry | null = null;
-        for (const entry of this.items) {
-            if (entry.name == name) {
-                file_entry = entry;
-                break;
-            }
-        }
+        const file_entry = this.items.get(name);
 
-        if (file_entry == null) {
+        if (!file_entry) {
             throw new Error(`File ${name} not found!`);
         }
 
         return await new Promise((resolve, reject) => {
-            file_entry!.file(resolve, reject);
+            file_entry.file(resolve, reject);
         });
     }
 
