@@ -1239,7 +1239,7 @@ export class BoardPainter extends DocumentPainter {
         this.filter_net = net;
 
         layer.clear();
-        layer.color = Color.from_css("rgb(55, 45, 100)");
+        layer.color = Color.from_css("rgb(200, 195, 215)");
         this.gfx.start_layer(layer.name);
 
         for (const item of board.items()) {

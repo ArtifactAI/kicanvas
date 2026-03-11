@@ -222,7 +222,8 @@ export class KCUIActivitySideBarElement extends KCUIElement {
         name = name?.toLowerCase();
 
         if (this.#activity == name && toggle) {
-            // Already on this activity, do nothing.
+            // Toggle collapse when clicking the active activity button.
+            this.collapsed = !this.collapsed;
             return;
         }
 
