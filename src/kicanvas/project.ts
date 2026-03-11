@@ -280,8 +280,19 @@ export class Project extends EventTarget implements IDisposable {
             }
         }
 
-        // Finally, if no root schematic was found, just use the first one we saw.
-        this.#root_schematic_page = first(this.#pages_by_path.values());
+        // If no root schematic was found via hierarchy, use the first
+        // schematic page we have, falling back to any first page.
+        if (!this.#root_schematic_page) {
+            for (const page of this.#pages_by_path.values()) {
+                if (page.type === "schematic") {
+                    this.#root_schematic_page = page;
+                    break;
+                }
+            }
+            this.#root_schematic_page ??= first(
+                this.#pages_by_path.values(),
+            );
+        }
     }
 
     public *files() {

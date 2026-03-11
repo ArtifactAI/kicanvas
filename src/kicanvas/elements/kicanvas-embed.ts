@@ -98,9 +98,6 @@ class KiCanvasEmbedElement extends KCUIElement {
     @attribute({ type: String })
     defaultpage: string | null;
 
-    @attribute({ type: Boolean })
-    sidebarcollapsed: boolean;
-
     custom_resolver: ((name: string) => URL) | null = null;
 
     #schematic_app: KCSchematicAppElement;
@@ -178,9 +175,21 @@ class KiCanvasEmbedElement extends KCUIElement {
             this.loaded = true;
             await this.update();
 
-            const defaultPage = this.defaultpage
+            let defaultPage = this.defaultpage
                 ? this.#project.page_by_path(this.defaultpage)
                 : null;
+
+            // Fallback: schematic pages include sheet paths in their key
+            // (e.g. "file.kicad_sch:/{uuid}"), so try matching by filename.
+            if (!defaultPage && this.defaultpage) {
+                for (const page of this.#project.pages()) {
+                    if (page.filename === this.defaultpage) {
+                        defaultPage = page;
+                        break;
+                    }
+                }
+            }
+
             this.#project.set_active_page(
                 defaultPage ?? this.#project.root_schematic_page!,
             );
@@ -199,9 +208,6 @@ class KiCanvasEmbedElement extends KCUIElement {
                 controls="${this.controls}"
                 controlslist="${this.controlslist}">
             </kc-schematic-app>` as KCSchematicAppElement;
-            if (this.sidebarcollapsed) {
-                this.#schematic_app.sidebarcollapsed = true;
-            }
         }
 
         if (this.#project.has_boards && !this.#board_app) {
@@ -209,9 +215,6 @@ class KiCanvasEmbedElement extends KCUIElement {
                 controls="${this.controls}"
                 controlslist="${this.controlslist}">
             </kc-board-app>` as KCBoardAppElement;
-            if (this.sidebarcollapsed) {
-                this.#board_app.sidebarcollapsed = true;
-            }
         }
 
         const focus_overlay =

@@ -62,9 +62,6 @@ export abstract class KCViewerAppElement<
     @attribute({ type: String })
     controlslist: string;
 
-    @attribute({ type: Boolean })
-    sidebarcollapsed: boolean;
-
     override connectedCallback() {
         this.hidden = true;
         (async () => {
@@ -206,8 +203,7 @@ export abstract class KCViewerAppElement<
             const pre_activities = this.make_pre_activities();
             const post_activities = this.make_post_activities();
             const activities = this.make_activities();
-            this.#activity_bar = html`<kc-ui-activity-side-bar
-                collapsed="${this.sidebarcollapsed}">
+            this.#activity_bar = html`<kc-ui-activity-side-bar>
                 ${pre_activities} ${activities} ${post_activities}
             </kc-ui-activity-side-bar>` as KCUIActivitySideBarElement;
             resizer = html`<kc-ui-resizer></kc-ui-resizer>`;

@@ -138,11 +138,7 @@ export class KCUIActivitySideBarElement extends KCUIElement {
     }
 
     override initialContentCallback() {
-        if (!this.collapsed) {
-            this.change_activity(this.#default_activity_name);
-        } else {
-            this.change_activity(null);
-        }
+        this.change_activity(this.#default_activity_name);
 
         delegate(this.renderRoot, "kc-ui-button", "click", (e, source) => {
             this.change_activity((source as KCUIButtonElement).name, true);
@@ -226,11 +222,11 @@ export class KCUIActivitySideBarElement extends KCUIElement {
         name = name?.toLowerCase();
 
         if (this.#activity == name && toggle) {
-            // Clicking on the selected activity will deselect it.
-            this.#activity = null;
-        } else {
-            this.#activity = name;
+            // Already on this activity, do nothing.
+            return;
         }
+
+        this.#activity = name;
 
         // If there's no current activity, collapse the activity item
         // container
