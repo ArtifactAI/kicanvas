@@ -215,7 +215,7 @@ export abstract class Viewer extends EventTarget {
     }
 
     public get selection_color() {
-        return Color.white;
+        return Color.from_css("rgb(55, 45, 100)");
     }
 
     protected paint_selected() {
