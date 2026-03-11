@@ -72,11 +72,18 @@ export class DocumentPainter {
 
         log.debug("Sorting paintable items into layers");
 
+        let item_index = 0;
         for (const item of document.items()) {
+            if (item == null) {
+                log.warn(`Null/undefined item at index ${item_index}, skipping`);
+                item_index++;
+                continue;
+            }
             const painter = this.painter_for(item);
 
             if (!painter) {
                 log.warn(`No painter found for ${item?.constructor.name}`);
+                item_index++;
                 continue;
             }
 
@@ -118,12 +125,16 @@ export class DocumentPainter {
     }
 
     paint_item(layer: ViewLayer, item: unknown, ...rest: any[]) {
+        if (item == null) {
+            log.warn(`paint_item called with ${item} on layer ${layer.name}`);
+            return;
+        }
         const painter = this.painter_for(item);
         painter?.paint(layer, item, ...rest);
     }
 
     painter_for(item: any): ItemPainter | undefined {
-        return this.painters.get(item.constructor);
+        return this.painters.get(item?.constructor);
     }
 
     layers_for(item: any): string[] {

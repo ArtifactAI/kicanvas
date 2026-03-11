@@ -629,6 +629,7 @@ export class Text {
     text: string;
     at: At;
     effects = new Effects();
+    exclude_from_sim = false;
     uuid?: string;
 
     constructor(
@@ -645,6 +646,7 @@ export class Text {
                 expr,
                 P.start("text"),
                 P.positional("text"),
+                P.pair("exclude_from_sim", T.boolean),
                 P.item("at", At),
                 P.item("effects", Effects),
                 P.pair("uuid", T.string),
@@ -683,6 +685,7 @@ export class TextBox extends GraphicItem {
     at: At;
     size: Vec2;
     effects = new Effects();
+    exclude_from_sim = false;
 
     constructor(expr: Parseable, parent?: LibSymbol | SchematicSymbol) {
         /* TODO: This was added in KiCad 7 */
@@ -693,6 +696,7 @@ export class TextBox extends GraphicItem {
                 expr,
                 P.start("text"),
                 P.positional("text"),
+                P.pair("exclude_from_sim", T.boolean),
                 P.item("at", At),
                 P.vec2("size"),
                 P.item("effects", Effects),
@@ -707,11 +711,13 @@ export class Label {
     text: string;
     at: At = new At();
     effects = new Effects();
+    exclude_from_sim = false;
     fields_autoplaced = false;
     uuid?: string;
 
     static common_expr_defs = [
         P.positional("text"),
+        P.pair("exclude_from_sim", T.boolean),
         P.item("at", At),
         P.item("effects", Effects),
         P.atom("fields_autoplaced"),
@@ -1361,11 +1367,9 @@ export class SchematicSymbol {
         }
     }
 
-    get lib_symbol(): LibSymbol {
-        // note: skipping a lot of null checks here because unless something
-        // horrible has happened, the schematic should absolutely have the
-        // library symbol for this symbol instance.
-        return this.parent.lib_symbols!.by_name(this.lib_name ?? this.lib_id)!;
+    get lib_symbol(): LibSymbol | undefined {
+        const name = this.lib_name ?? this.lib_id;
+        return this.parent.lib_symbols?.by_name(name);
     }
 
     get_property_text(name: string) {
@@ -1404,7 +1408,7 @@ export class SchematicSymbol {
     }
 
     get unit_suffix() {
-        if (!this.unit || this.lib_symbol.unit_count <= 1) {
+        if (!this.unit || (this.lib_symbol?.unit_count ?? 0) <= 1) {
             return "";
         }
 
@@ -1451,13 +1455,13 @@ export class SchematicSymbol {
             case "UNIT":
                 return this.unit_suffix;
             case "SYMBOL_LIBRARY":
-                return this.lib_symbol.library_name;
+                return this.lib_symbol?.library_name;
             case "SYMBOL_NAME":
-                return this.lib_symbol.library_item_name;
+                return this.lib_symbol?.library_item_name;
             case "SYMBOL_DESCRIPTION":
-                return this.lib_symbol.description;
+                return this.lib_symbol?.description;
             case "SYMBOL_KEYWORDS":
-                return this.lib_symbol.keywords;
+                return this.lib_symbol?.keywords;
             case "EXCLUDE_FROM_BOM":
                 return this.in_bom ? "" : "Excluded from BOM";
             case "EXCLUDE_FROM_BOARD":
@@ -1504,14 +1508,14 @@ export class PinInstance {
     }
 
     get definition() {
-        return this.parent.lib_symbol.pin_by_number(
+        return this.parent.lib_symbol?.pin_by_number(
             this.number,
             this.parent.convert,
         );
     }
 
     get unit() {
-        return this.definition.unit;
+        return this.definition?.unit;
     }
 }
 

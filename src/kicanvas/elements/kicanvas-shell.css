@@ -19,32 +19,11 @@
     display: none;
 }
 
-section.loading-overlay {
-    display: none;
-}
-
-.loading-logo {
-    width: 80px;
-    animation: loading-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes loading-pulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
-}
-
-section.loading-overlay p {
-    font-size: 1.2em;
-    color: var(--fg);
-    opacity: 0.7;
-}
-
 :host main {
     display: contents;
 }
 
-section.overlay,
-:host([loading]) section.loading-overlay {
+section.overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -56,10 +35,6 @@ section.overlay,
     align-items: center;
     justify-content: center;
     background: var(--gradient-purple-blue-dark);
-}
-
-:host([loading]) section.loading-overlay {
-    gap: 1em;
 }
 
 section.overlay h1 {

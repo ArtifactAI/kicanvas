@@ -239,10 +239,6 @@ class KiCanvasShellElement extends KCUIElement {
                         </a>
                     </p>
                 </section>
-                <section class="loading-overlay">
-                    <img src="images/kicanvas.png" class="loading-logo" />
-                    <p>Loading project...</p>
-                </section>
                 <main>${this.#schematic_app} ${this.#board_app}</main>
             </kc-ui-app>
         `;

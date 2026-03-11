@@ -13,7 +13,7 @@ export enum LogLevel {
 export class Logger {
     constructor(
         public readonly name: string,
-        public level: LogLevel = LogLevel.INFO,
+        public level: LogLevel = LogLevel.ERROR,
     ) {}
 
     #log(method: CallableFunction, ...args: any[]) {

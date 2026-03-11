@@ -13,8 +13,11 @@ import {
     css,
     html,
 } from "../../base/web-components";
-import { KCUIElement } from "../../kc-ui";
+import { KCUIElement, KCUIIconElement } from "../../kc-ui";
 import kc_ui_styles from "../../kc-ui/kc-ui.css";
+import { sprites_url } from "../icons/sprites";
+
+KCUIIconElement.sprites_url = sprites_url;
 import { Project } from "../project";
 import {
     FetchFileSystem,

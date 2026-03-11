@@ -40,7 +40,7 @@ export class PinPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, p: schematic_items.PinInstance) {
-        if (p.definition.hide) {
+        if (!p.definition || p.definition.hide) {
             return;
         }
 
@@ -201,6 +201,7 @@ export class PinPainter extends SchematicItemPainter {
     draw_name_and_number(gfx: Renderer, pin: PinInfo) {
         const def = pin.def;
         const libsym = pin.pin.parent.lib_symbol;
+        if (!libsym) return;
         const name = pin.pin.alternate ?? def.name.text;
         const number = def.number.text;
         const pin_length = def.length;

@@ -87,41 +87,57 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, si: schematic_items.SchematicSymbol) {
-        if (layer.name == LayerNames.interactive && si.lib_symbol.power) {
-            // Don't draw power symbols on the interactive layer.
-            return;
-        }
-
-        const transform = get_symbol_transform(si);
-
-        this.view_painter.current_symbol = si;
-        this.view_painter.current_symbol_transform = transform;
-
-        this.gfx.state.push();
-        this.gfx.state.matrix = Matrix3.translation(
-            si.at.position.x,
-            si.at.position.y,
-        );
-        this.gfx.state.multiply(transform.matrix);
-
-        const body_style = si.convert ?? 1;
-
-        this.view_painter.paint_item(layer, si.lib_symbol, body_style);
-
-        this.gfx.state.pop();
-
-        if (
-            [
-                LayerNames.symbol_pin,
-                LayerNames.symbol_foreground,
-                LayerNames.interactive,
-            ].includes(layer.name as LayerNames)
-        ) {
-            for (const pin of si.unit_pins) {
-                this.view_painter.paint_item(layer, pin);
+        if (si.lib_symbol) {
+            if (layer.name == LayerNames.interactive && si.lib_symbol.power) {
+                return;
             }
+
+            const transform = get_symbol_transform(si);
+
+            this.view_painter.current_symbol = si;
+            this.view_painter.current_symbol_transform = transform;
+
+            this.gfx.state.push();
+            this.gfx.state.matrix = Matrix3.translation(
+                si.at.position.x,
+                si.at.position.y,
+            );
+            this.gfx.state.multiply(transform.matrix);
+
+            const body_style = si.convert ?? 1;
+
+            this.view_painter.paint_item(layer, si.lib_symbol, body_style);
+
+            this.gfx.state.pop();
+
+            if (
+                [
+                    LayerNames.symbol_pin,
+                    LayerNames.symbol_foreground,
+                    LayerNames.interactive,
+                ].includes(layer.name as LayerNames)
+            ) {
+                for (const pin of si.unit_pins) {
+                    this.view_painter.paint_item(layer, pin);
+                }
+            }
+
+            if (si.dnp && layer.name == LayerNames.marks) {
+                const bbox = get_symbol_body_and_pins_bbox(this.theme, si);
+                const width = schematic_items.DefaultValues.line_width * 3;
+                const color = this.theme.erc_error;
+
+                this.gfx.line([bbox.top_left, bbox.bottom_right], width, color);
+                this.gfx.line([bbox.bottom_left, bbox.top_right], width, color);
+            }
+
+            this.view_painter.current_symbol = undefined;
+            this.view_painter.current_symbol_transform = undefined;
+        } else {
+            this.#paint_missing(layer, si);
         }
 
+        // Paint fields (reference, value, etc.) even for missing symbols.
         if (
             layer.name == LayerNames.symbol_field ||
             layer.name == LayerNames.interactive
@@ -130,18 +146,30 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
                 this.view_painter.paint_item(layer, p);
             }
         }
+    }
 
-        if (si.dnp && layer.name == LayerNames.marks) {
-            const bbox = get_symbol_body_and_pins_bbox(this.theme, si);
-            const width = schematic_items.DefaultValues.line_width * 3;
-            const color = this.theme.erc_error;
-
-            this.gfx.line([bbox.top_left, bbox.bottom_right], width, color);
-            this.gfx.line([bbox.bottom_left, bbox.top_right], width, color);
+    #paint_missing(layer: ViewLayer, si: schematic_items.SchematicSymbol) {
+        if (layer.name != LayerNames.symbol_foreground) {
+            return;
         }
 
-        this.view_painter.current_symbol = undefined;
-        this.view_painter.current_symbol_transform = undefined;
+        const size = 2.54;
+        const pos = si.at.position;
+        const color = this.theme.erc_error;
+        const width = schematic_items.DefaultValues.line_width;
+
+        this.gfx.line(
+            [
+                new Vec2(pos.x - size, pos.y - size),
+                new Vec2(pos.x + size, pos.y - size),
+                new Vec2(pos.x + size, pos.y + size),
+                new Vec2(pos.x - size, pos.y + size),
+                new Vec2(pos.x - size, pos.y - size),
+            ],
+            width,
+            color,
+        );
+
     }
 }
 

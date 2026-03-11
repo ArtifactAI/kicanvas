@@ -95,7 +95,7 @@ export class KCSchematicSymbolsPanelElement extends KCUIElement {
         );
 
         for (const sym of symbols) {
-            const match_text = `${sym.reference} ${sym.value} ${sym.id} ${sym.lib_symbol.name}`;
+            const match_text = `${sym.reference} ${sym.value} ${sym.id} ${sym.lib_symbol?.name ?? ""}`;
             const entry = html`<kc-ui-menu-item
                 name="${sym.uuid}"
                 data-match-text="${match_text}">
@@ -103,7 +103,7 @@ export class KCSchematicSymbolsPanelElement extends KCUIElement {
                 <span> ${sym.value} </span>
             </kc-ui-menu-item>` as HTMLElement;
 
-            if (sym.lib_symbol.power) {
+            if (sym.lib_symbol?.power) {
                 power_symbol_elms.push(entry);
             } else {
                 symbol_elms.push(entry);

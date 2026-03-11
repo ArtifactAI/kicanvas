@@ -76,7 +76,7 @@ export class KCSchematicPropertiesPanelElement extends KCUIElement {
                 item.unit_pins,
                 (pin) => pin.number,
             ).map((p) => {
-                return entry(p.number, p.definition.name.text);
+                return entry(p.number, p.definition?.name.text ?? "?");
             });
 
             entries = html`
@@ -106,14 +106,14 @@ export class KCSchematicPropertiesPanelElement extends KCUIElement {
                 ${entry("On board", checkbox(item.in_bom))}
                 ${entry("Populate", checkbox(!item.dnp))} ${header("Fields")}
                 ${properties} ${header("Symbol properties")}
-                ${entry("Name", lib.name)}
-                ${entry("Description", lib.description)}
-                ${entry("Keywords", lib.keywords)}
-                ${entry("Power", checkbox(lib.power))}
-                ${entry("Units", lib.unit_count)}
+                ${entry("Name", lib?.name ?? "?")}
+                ${entry("Description", lib?.description ?? "")}
+                ${entry("Keywords", lib?.keywords ?? "")}
+                ${entry("Power", checkbox(lib?.power ?? false))}
+                ${entry("Units", lib?.unit_count ?? "?")}
                 ${entry(
                     "Units are interchangeable",
-                    checkbox(lib.units_interchangable),
+                    checkbox(lib?.units_interchangable ?? false),
                 )}
                 ${header("Pins")} ${pins}
             `;
