@@ -16,8 +16,6 @@ import {
 import { KCUIElement, KCUIIconElement } from "../../kc-ui";
 import kc_ui_styles from "../../kc-ui/kc-ui.css";
 import { sprites_url } from "../icons/sprites";
-
-KCUIIconElement.sprites_url = sprites_url;
 import { Project } from "../project";
 import {
     FetchFileSystem,
@@ -27,6 +25,8 @@ import {
 } from "../services/vfs";
 import type { KCBoardAppElement } from "./kc-board/app";
 import type { KCSchematicAppElement } from "./kc-schematic/app";
+
+KCUIIconElement.sprites_url = sprites_url;
 
 const log = new Logger("kicanvas:embedtag");
 
@@ -45,7 +45,7 @@ class KiCanvasEmbedElement extends KCUIElement {
                 width: 100%;
                 max-height: 100%;
                 aspect-ratio: 1.414;
-                background-color: aqua;
+                background-color: #13121a;
                 color: var(--fg);
                 font-family:
                     "Nunito", ui-rounded, "Hiragino Maru Gothic ProN",
@@ -94,6 +94,12 @@ class KiCanvasEmbedElement extends KCUIElement {
 
     @attribute({ type: String })
     zoom: "objects" | "page" | string | null;
+
+    @attribute({ type: String })
+    defaultpage: string | null;
+
+    @attribute({ type: Boolean })
+    sidebarcollapsed: boolean;
 
     custom_resolver: ((name: string) => URL) | null = null;
 
@@ -172,7 +178,12 @@ class KiCanvasEmbedElement extends KCUIElement {
             this.loaded = true;
             await this.update();
 
-            this.#project.set_active_page(this.#project.root_schematic_page!);
+            const defaultPage = this.defaultpage
+                ? this.#project.page_by_path(this.defaultpage)
+                : null;
+            this.#project.set_active_page(
+                defaultPage ?? this.#project.root_schematic_page!,
+            );
         } finally {
             this.loading = false;
         }
@@ -185,18 +196,22 @@ class KiCanvasEmbedElement extends KCUIElement {
 
         if (this.#project.has_schematics && !this.#schematic_app) {
             this.#schematic_app = html`<kc-schematic-app
-                sidebarcollapsed
                 controls="${this.controls}"
                 controlslist="${this.controlslist}">
             </kc-schematic-app>` as KCSchematicAppElement;
+            if (this.sidebarcollapsed) {
+                this.#schematic_app.sidebarcollapsed = true;
+            }
         }
 
         if (this.#project.has_boards && !this.#board_app) {
             this.#board_app = html`<kc-board-app
-                sidebarcollapsed
                 controls="${this.controls}"
                 controlslist="${this.controlslist}">
             </kc-board-app>` as KCBoardAppElement;
+            if (this.sidebarcollapsed) {
+                this.#board_app.sidebarcollapsed = true;
+            }
         }
 
         const focus_overlay =

@@ -87,15 +87,17 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
     }
 
     paint(layer: ViewLayer, si: schematic_items.SchematicSymbol) {
+        const transform = get_symbol_transform(si);
+
+        this.view_painter.current_symbol = si;
+        this.view_painter.current_symbol_transform = transform;
+
         if (si.lib_symbol) {
             if (layer.name == LayerNames.interactive && si.lib_symbol.power) {
+                this.view_painter.current_symbol = undefined;
+                this.view_painter.current_symbol_transform = undefined;
                 return;
             }
-
-            const transform = get_symbol_transform(si);
-
-            this.view_painter.current_symbol = si;
-            this.view_painter.current_symbol_transform = transform;
 
             this.gfx.state.push();
             this.gfx.state.matrix = Matrix3.translation(
@@ -130,9 +132,6 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
                 this.gfx.line([bbox.top_left, bbox.bottom_right], width, color);
                 this.gfx.line([bbox.bottom_left, bbox.top_right], width, color);
             }
-
-            this.view_painter.current_symbol = undefined;
-            this.view_painter.current_symbol_transform = undefined;
         } else {
             this.#paint_missing(layer, si);
         }
@@ -146,6 +145,9 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
                 this.view_painter.paint_item(layer, p);
             }
         }
+
+        this.view_painter.current_symbol = undefined;
+        this.view_painter.current_symbol_transform = undefined;
     }
 
     #paint_missing(layer: ViewLayer, si: schematic_items.SchematicSymbol) {
@@ -169,7 +171,6 @@ export class SchematicSymbolPainter extends SchematicItemPainter {
             width,
             color,
         );
-
     }
 }
 

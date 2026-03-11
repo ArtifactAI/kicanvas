@@ -452,11 +452,13 @@ class PropertyPainter extends SchematicItemPainter {
 
         schfield.text_pos = rel_position;
 
-        const orient = schfield.draw_rotation;
+        // Set the corrected angle before computing the bounding box so that
+        // get_text_box() uses the correct orientation for its dimensions.
+        schfield.attributes.angle = schfield.draw_rotation;
+
         const bbox = schfield.bounding_box;
         const pos = bbox.center;
 
-        schfield.attributes.angle = orient;
         schfield.attributes.h_align = "center";
         schfield.attributes.v_align = "center";
         schfield.attributes.stroke_width =
