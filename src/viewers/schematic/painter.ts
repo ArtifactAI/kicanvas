@@ -456,27 +456,66 @@ class PropertyPainter extends SchematicItemPainter {
         // get_text_box() uses the correct orientation for its dimensions.
         schfield.attributes.angle = schfield.draw_rotation;
 
-        const bbox = schfield.bounding_box;
-        const pos = bbox.center;
+        // Flip justification for mirrored symbols. KiCad internally swaps
+        // h_align/v_align in SCH_FIELD::GetBoundingBox when the parent
+        // symbol is mirrored so that get_text_box() computes the correct
+        // bounding box. Without this, left-justified text on a mirrored
+        // symbol would remain left-justified instead of becoming right-
+        // justified, shifting the rendered position.
+        if (transform) {
+            const is_h = schfield.attributes.angle.is_horizontal;
+            if (transform.mirror_y) {
+                if (is_h) {
+                    schfield.attributes.h_align =
+                        schfield.attributes.h_align === "left" ? "right"
+                        : schfield.attributes.h_align === "right" ? "left"
+                        : schfield.attributes.h_align;
+                } else {
+                    schfield.attributes.v_align =
+                        schfield.attributes.v_align === "top" ? "bottom"
+                        : schfield.attributes.v_align === "bottom" ? "top"
+                        : schfield.attributes.v_align;
+                }
+            }
+            if (transform.mirror_x) {
+                if (is_h) {
+                    schfield.attributes.v_align =
+                        schfield.attributes.v_align === "top" ? "bottom"
+                        : schfield.attributes.v_align === "bottom" ? "top"
+                        : schfield.attributes.v_align;
+                } else {
+                    schfield.attributes.h_align =
+                        schfield.attributes.h_align === "left" ? "right"
+                        : schfield.attributes.h_align === "right" ? "left"
+                        : schfield.attributes.h_align;
+                }
+            }
+        }
 
-        schfield.attributes.h_align = "center";
-        schfield.attributes.v_align = "center";
+        // Use the field's world position directly (SchField.position applies
+        // the parent symbol transform) and pass the original alignment through
+        // to StrokeFont. The previous approach computed the bounding box,
+        // found its center, and forced center alignment — but the bbox
+        // transform chain (Y-mirror, parent matrix) produced incorrect centers
+        // for rotated and mirrored symbols.
+        const pos = schfield.position;
+
         schfield.attributes.stroke_width =
             schfield.get_effective_text_thickness(
                 schematic_items.DefaultValues.line_width * 10000,
             );
         schfield.attributes.color = color;
 
-        const bbox_pts = Matrix3.scaling(0.0001, 0.0001).transform_all([
-            bbox.top_left,
-            bbox.top_right,
-            bbox.bottom_right,
-            bbox.bottom_left,
-            bbox.top_left,
-        ]);
-
         if (layer.name == LayerNames.interactive) {
-            // Drawing text is expensive, just draw the bbox for the interactive layer.
+            // For hit-testing, compute the bbox and draw it.
+            const bbox = schfield.bounding_box;
+            const bbox_pts = Matrix3.scaling(0.0001, 0.0001).transform_all([
+                bbox.top_left,
+                bbox.top_right,
+                bbox.bottom_right,
+                bbox.bottom_left,
+                bbox.top_left,
+            ]);
             this.gfx.line(new Polyline(Array.from(bbox_pts), 0.1, Color.white));
         } else {
             this.gfx.state.push();

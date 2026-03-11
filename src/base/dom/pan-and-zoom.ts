@@ -91,7 +91,7 @@ export class PanAndZoom {
         let dragging = false;
 
         this.target.addEventListener("mousedown", (e: MouseEvent) => {
-            if (e.button === 1 || e.button === 2) {
+            if (e.button === 0 || e.button === 1 || e.button === 2) {
                 e.preventDefault();
                 dragging = true;
                 dragStartPosition = new Vec2(e.clientX, e.clientY);
@@ -108,7 +108,7 @@ export class PanAndZoom {
         });
 
         this.target.addEventListener("mouseup", (e: MouseEvent) => {
-            if (e.button === 1 || e.button === 2) {
+            if (e.button === 0 || e.button === 1 || e.button === 2) {
                 dragging = false;
                 dragStartPosition = null;
             }
