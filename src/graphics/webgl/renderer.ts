@@ -98,6 +98,7 @@ export class WebGL2Renderer extends Renderer {
         // Update canvas size and projection matrix if needed
         this.update_canvas_size();
 
+        this.gl.clearColor(...this.background_color.to_array());
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
     }
 

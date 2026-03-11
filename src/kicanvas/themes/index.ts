@@ -5,10 +5,11 @@
 */
 
 import { type Theme } from "../../kicad";
+import artifact from "./artifact";
 import witch_hazel from "./witch-hazel";
 import kicad_default from "./kicad-default";
 
-const themes = [witch_hazel, kicad_default];
+const themes = [artifact, witch_hazel, kicad_default];
 const themes_by_name = new Map(
     themes.map((v) => {
         return [v.name, v];
@@ -16,7 +17,7 @@ const themes_by_name = new Map(
 );
 
 export default {
-    default: witch_hazel,
+    default: artifact,
 
     by_name(name: string): Theme {
         return themes_by_name.get(name) ?? this.default;
