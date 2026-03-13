@@ -27,6 +27,7 @@ export async function bundle(options = {}) {
         },
         define: {
             DEBUG: "false",
+            ENABLE_REPO_SUPPORT: "false",
         },
         plugins: [CSSMinifyPlugin, ESbuildProblemMatcherPlugin],
         ...options,

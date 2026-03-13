@@ -23,8 +23,8 @@ import {
     MergedFileSystem,
     VirtualFileSystem,
 } from "../services/vfs";
-import type { KCBoardAppElement } from "./kc-board/app";
-import type { KCSchematicAppElement } from "./kc-schematic/app";
+import { KCBoardAppElement } from "./kc-board/app";
+import { KCSchematicAppElement } from "./kc-schematic/app";
 
 KCUIIconElement.sprites_url = sprites_url;
 

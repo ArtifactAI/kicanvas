@@ -5,5 +5,8 @@
 */
 
 import "./base/livereload";
-import "./kicanvas/elements/kicanvas-shell";
+declare const ENABLE_REPO_SUPPORT: boolean;
+if (ENABLE_REPO_SUPPORT) {
+    import("./kicanvas/elements/kicanvas-shell");
+}
 import "./kicanvas/elements/kicanvas-embed";
